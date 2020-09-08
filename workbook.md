@@ -57,7 +57,7 @@ Now hit “Compile”, and type some text in the text bar on the right. Your win
 
 ![OTLFiddle window](typewknd-1.png)
 
-Congatulations! You’ve made your first OpenType rule. Now I would like you to experiment by modifying the rule that you’ve just made:
+Congatulations! You’ve made your first OpenType rule. Now I would like you to *experiment* by modifying the rule that you’ve just made:
 
 * Do we need all those semicolons?
 * Are spaces significant?
@@ -95,7 +95,9 @@ feature rlig {
 }  rlig;
 ```
 
-When a class is used in a substitution, corresponding members are substituted on both sides. What happens when a glyph class is only used on the left hand side? Try it and find out:
+When a class is used in a substitution, corresponding members are substituted on both sides.
+
+*Experiment*: What happens when a glyph class is only used on the left hand side? Try it and find out:
 
 ```
 feature rlig {
@@ -128,7 +130,9 @@ While we could now carry on describing the syntax of the feature file language a
 
 So we will now pause our experiments with substitution rules, and before we get into other kinds of rule, we need to step back to look at how the process of OpenType shaping works. *Shaping* is the application of the rules and features within a font to a piece of text. (It also includes operations like decomposition and mark reordering that we're also not going to get into today.)
 
-We've seen that we can put *rules* into a *feature*, but it's important to know that there's another level involved too. Inside an OpenType font, rules are arranged into *lookups*, which are associated with features. **To really understand OpenType programming, you need to think in terms of lookups, not features**.
+We've seen that we can put *rules* into a *feature*, but it's important to know that there's another level involved too. Inside an OpenType font, rules are arranged into *lookups*, which are associated with features. Although the language we use to write OpenType code is called "feature language", the primary element of OpenType shaping is the *lookup*.
+
+**To really understand OpenType programming, you need to think in terms of lookups, not features**.
 
 ![OpenType model](slide-8.png)
 
@@ -148,15 +152,156 @@ feature rlig {
 } rlig;
 ```
 
-We can see a feature, and we can see a rule, but where's the lookup? 
+We can see a feature, and we can see a rule, but where's the lookup? When our feature code was translated into the representation inside an OpenType font, the compiler automatically put it into a lookup for us. But we can also write our lookups explicitly, like this:
 
-### The shaper model
+```
+feature rlig {
+  lookup rlig_1 {
+    sub f f by f_f;
+  } rlig_1;
+} rlig;
+```
 
-* Lookup as primary Experiment -rewrite with lookup. Why you should do that.
-* All rules run simultaneously - Longest match within a feature wins - Ordering done for you
-* Which features are applied (Language specific)
-* Features not ordered, lookups ordered
-* Poll for slide 13: bcd / ccd / ddd
+In fact, we're going to write our rules like this from now on, and I'd encourage you to do it when you are working on your own font projects. You can also define a lookup separately, and refer to it within a feature, like this:
+
+```
+lookup rlig_1 {
+    sub f f by f_f;
+} rlig_1;
+
+feature rlig {
+    lookup rlig_1;
+} rlig;
+```
+
+What difference does it make?
+
+*Experiment*: Consider the difference between this:
+
+```
+feature rlig {
+    sub a by b;
+    sub b by c;
+} rlig;
+```
+
+and
+
+```
+feature rlig {
+    lookup l1 { sub a by b; } l1;
+    lookup l2 { sub b by c; } l2;
+} rlig;
+```
+
+Try each one out in OTLFiddle against the input string "abc". What happened? Can you work out why? (Hint: How many lookups in the feature in each case? How many rules in each lookup?)
+
+### Ordering of rules, lookups and features
+
+The previous experiment taught us something important: *within a lookup, all rules apply simultaneously*. What? How can you apply more than one rule at once? If we go back to our "paper tape" model of shaping, we can see that in this example, out of our three rules, two of them can apply at glyph position 1: (I'm counting "o" as glyph position zero)
+
+![OpenType model](slide-9.png)
+
+We could either apply the "f f -> f_f" rule or "f f i -> f_f_i" here, but (as we can see) the `f f i` rule is chosen.
+
+*Experiment*: Try changing the order of the rules:
+
+```
+feature rlig {
+    sub f f by f_f;
+    sub f f i by f_f_i;
+    sub f l by f_l;
+} rlig;
+```
+
+Does it make a difference?
+
+It turns out that it doesn't! This is because the feature compiler is doing something clever on our behalf - it is ordering the rules longest-first when it compiles them into the font file, so that the longest match always wins. This is *almost* always what you want, but it does make it a little harder to follow what's going on!
+
+What about the ordering of features? Here, too, it is important to think **lookups not features**. We can talk about the *selection* of features which are applied. For the open source Harfbuzz shaping engine, the list of features which are shaped in a run of text looks like this:
+
+* [rvrn](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rvrn)
+* [ltra](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-ltra), [ltrm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-ltrm) (for left-to-right texts) OR [rtla](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rtla), [rtlm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rtlm) (for right-to-left texts)
+* [frac]](https://docs.microsoft.com/en-us/typography/opentype/spec/features_fj#-tag-frac), [numr](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-numr), [dnom](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-dnom)
+* [rand](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rand)
+* Script shaper specific features (see the list on the left of [this page](https://docs.microsoft.com/en-us/typography/script-development/use) to find the features for your script.)
+* [abvm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-abvm), [blwm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-blwm), [ccmp](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-ccmp), [locl](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-locl), [mark](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-mark), [mkmk](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-mkmk), [rlig](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rlig)
+* [calt](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-calt), [clig](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-clig), [curs](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-curs), [dist](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-dist), [kern](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-kern), [liga](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-liga), [rclt](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rclt) OR [vert](https://docs.microsoft.com/en-us/typography/opentype/spec/features_uz#-tag-vert)
+* Anything the user turned on
+
+Each of these bullet points represents a *stage*. The stages are processed within the order given above, but *within* a stage, lookups are *not ordered*. What does this mean? Time for another
+
+*Experiment*: What does the following code do on the string `abc`?
+
+```
+feature rlig { sub a by b; } rlig;
+
+feature ccmp { sub b by c; } ccmp;
+
+feature rlig { sub c by d; } rlig;
+```
+
+Guess first before trying it out! Will it produce:
+
+* `bcd`
+* `bdd`
+* `ccd`
+* `ddd`
+* Something else?
+
+What about this?
+
+```
+feature ccmp { sub b by c; } ccmp;
+
+feature rlig { sub a by b; } rlig;
+
+feature rlig { sub c by d; } rlig;
+
+```
+
+Clearly the order of *lookups* is more important than the order of *features*. In fact, OpenType shaping engines use feature names to *select* lookups within a stage, but within the stage, they then run the lookups in the order they are laid out in the font file - which is also the order they are laid out in the feature file:
+
+```
+feature rlig {
+lookup l0 { sub a by b; } l0;
+} rlig;
+
+feature ccmp {
+ lookup l1 { sub b by c; } l1;
+} ccmp;
+
+feature test {
+ lookup l2 { sub A by B; } l2;
+} l2 test;
+
+feature rlig {
+ lookup l3 { sub c by d; } l3;
+} rlig;
+```
+
+If the normal feature are selected, `rlig` and `ccmp` are on, but feature `test` is not turned on by the user. `rlig` and `ccmp` are in the same stage, which means that the lookups will be run in the order they appear: `l0`, `l1`, `l3`.
+
+**Remember: shapers use *features* to gather *lookups*.**
+
+### Lookup Flags
+
+Lookups may have flags which alter the way they operate.
+
+Experiment: Let's go back to our original ligature and try it against some new text:
+
+```
+feature rlig {
+  lookup ff_ligature {
+    sub f f by f_f;
+  } ff_ligature;
+} rlig;
+```
+
+The text I want you to try this against is `f̊f`. (Maybe you want to copy and paste that into OTLFiddle.) It is the string "f", COMBINING RING ABOVE (Unicode codepoint U+030A), "f".
+
+In a way it's pretty obvious that this *shouldn't* work, because the "read head" looks for the two glyphs "f" "f", and finds "f" "ringcomb" instead.
+
 * Flags - experiment: ff/f̊f
 
 * Phases: Sub and Pos phase
