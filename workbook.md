@@ -8,7 +8,7 @@
 
 You will need:
 
-* A copy of the [OTLFiddle]((https://github.com/simoncozens/otlfiddle/releases)) application.
+* A copy of the [OTLFiddle](https://github.com/simoncozens/otlfiddle/releases)) application.
 
 > This also requires you to have the Python “fontTools” library installed, which you can do with either “pip install fontTools” or “easy_install fontTools” from the command line if you don’t have it already.
 
@@ -40,6 +40,8 @@ If you want more detail on any of these areas, you might find it in my book [Fon
 ## Basic feature coding - substitutions and ligatures
 
 We’re mostly going to be exploring feature programming through example and experimentation. When it comes to programming, just trying things and seeing what happens is the best way to learn! OTLFiddle was created so that you can quickly test out OpenType rules and get feedback on how they are applied to a piece of text.
+
+OpenType rules are normally written in a language that doesn't exactly have a name - it's known variously as "AFDKO" (from "Adobe Font Development Kit for OpenType"), "Adobe feature language", "fea", "feature format", and so on. Other ways of representing rules are available, (and inside the font they are stored in quite a different representation) but this is the most common way that we can write the rules to program our fonts.
 
 We’re going to begin by coding a simple “ff” ligature. Open up OTLFiddle, drop the `OpenSans-Dummy.ttf` font at the top, and paste in the contents of into `OpenSans-Dummy.fea` the editor on the left. (This provides anchor and mark positioning rules for accents).
 
@@ -103,11 +105,53 @@ feature rlig {
 
 ### Named Glyph Classes
 
+Some classes we will use more than once, and it's tedious to write them out each time. We can *define* a glyph class, naming a set of glyphs so we can use the class again later:
+
+```
+@lower_vowels = [a e i o u];
+@upper_vowels = [A E I O U];
+```
+
+Now anywhere a glyph class appeared, we can use a named glyph class instead (including in the definition of other glyph classes!):
+
+```
+@vowels = [@lower_vowels @upper_vowels];
+
+feature rlig {
+  sub @lower_vowels by @upper_vowels;
+} rlig;
+```
+
 ## How OpenType shaping works
+
+While we could now carry on describing the syntax of the feature file language and giving examples of OpenType rules, this would not necessarily help us to transfer our knowledge to new situations - especially when we are dealing with scripts which have more complicated requirements and expectations. To get that transferable knowledge, we need to have a deeper understanding of what we're doing and how it is being processed by the computer.
+
+So we will now pause our experiments with substitution rules, and before we get into other kinds of rule, we need to step back to look at how the process of OpenType shaping works. *Shaping* is the application of the rules and features within a font to a piece of text. (It also includes operations like decomposition and mark reordering that we're also not going to get into today.)
+
+We've seen that we can put *rules* into a *feature*, but it's important to know that there's another level involved too. Inside an OpenType font, rules are arranged into *lookups*, which are associated with features. **To really understand OpenType programming, you need to think in terms of lookups, not features**.
+
+![OpenType model](slide-8.png)
+
+I think of the shaping process as being like an old punched-tape computer. (If you know what a Turing machine is, that's an even better analogy.) The input glyphs that are typed by the user are written on the "tape" and then a "read head" goes over the tape cell-by-cell, checking the current lookup matches at the current position.
+
+![OpenType model](slide-9.png)
+
+If it does, the shaper takes the appropriate action (substitution in the cases we have seen so far). It then moves on to the next location. Once it has gone over the whole tape and performed any actions, the next lookup gets a go (we call this "applying" the lookup).
+
+### Explicit lookups
+
+Let's look at our first example again:
+
+```
+feature rlig {
+  sub f f by f_f;
+} rlig;
+```
+
+We can see a feature, and we can see a rule, but where's the lookup? 
 
 ### The shaper model
 
-* Shaper model: features, lookups, rules, “paper tape”
 * Lookup as primary Experiment -rewrite with lookup. Why you should do that.
 * All rules run simultaneously - Longest match within a feature wins - Ordering done for you
 * Which features are applied (Language specific)
