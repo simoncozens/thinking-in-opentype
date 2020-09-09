@@ -8,12 +8,12 @@
 
 You will need:
 
-* A copy of the [OTLFiddle](https://github.com/simoncozens/otlfiddle/releases)) application.
+* A copy of the [OTLFiddle](https://github.com/simoncozens/otlfiddle/releases) application.
 
 > This also requires you to have the Python “fontTools” library installed, which you can do with either “pip install fontTools” or “easy_install fontTools” from the command line if you don’t have it already.
 
 * A copy of `OpenSans-Dummy.ttf` and `OpenSans-Dummy.fea`
-* A copy of `Amiri-Dummy.ttf` and `Amiri-Dummy.fea`
+* A copy of `Mirza-Dummy.ttf` and `Mirza-Dummy.fea`
 * A tool like [UnicodeChecker](https://earthlingsoft.net/UnicodeChecker/), [UnicopediaPlus](https://github.com/tonton-pixel/unicopedia-plus) or a web site like [UniView](https://r12a.github.io/uniview/) which will help you to paste unfamiliar characters into text.
 * [Optionally] A font editor.
 
@@ -222,14 +222,14 @@ What about the ordering of features? Here, too, it is important to think **looku
 
 * [rvrn](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rvrn)
 * [ltra](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-ltra), [ltrm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-ltrm) (for left-to-right texts) OR [rtla](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rtla), [rtlm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rtlm) (for right-to-left texts)
-* [frac]](https://docs.microsoft.com/en-us/typography/opentype/spec/features_fj#-tag-frac), [numr](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-numr), [dnom](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-dnom)
+* [frac](https://docs.microsoft.com/en-us/typography/opentype/spec/features_fj#-tag-frac), [numr](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-numr), [dnom](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-dnom)
 * [rand](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rand)
 * Script shaper specific features (see the list on the left of [this page](https://docs.microsoft.com/en-us/typography/script-development/use) to find the features for your script.)
 * [abvm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-abvm), [blwm](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-blwm), [ccmp](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-ccmp), [locl](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-locl), [mark](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-mark), [mkmk](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-mkmk), [rlig](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rlig)
 * [calt](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-calt), [clig](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-clig), [curs](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-curs), [dist](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ae#-tag-dist), [kern](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-kern), [liga](https://docs.microsoft.com/en-us/typography/opentype/spec/features_ko#-tag-liga), [rclt](https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#-tag-rclt) OR [vert](https://docs.microsoft.com/en-us/typography/opentype/spec/features_uz#-tag-vert)
 * Anything the user turned on
 
-Each of these bullet points represents a *stage*. The stages are processed within the order given above, but *within* a stage, lookups are *not ordered*. What does this mean? Time for another
+Each of these bullet points represents a *stage*. The stages are processed in the order given above, but *within* a stage, features are *not ordered*. What does this mean? Time for another...
 
 *Experiment*: What does the following code do on the string `abc`?
 
@@ -280,7 +280,7 @@ feature rlig {
 } rlig;
 ```
 
-If the normal feature are selected, `rlig` and `ccmp` are on, but feature `test` is not turned on by the user. `rlig` and `ccmp` are in the same stage, which means that the lookups will be run in the order they appear: `l0`, `l1`, `l3`.
+If the normal features are selected (i.e. the user hasn't done anything clever to turn on or off certain features), then `rlig` and `ccmp` will be processed, but feature `test` will not be. `rlig` and `ccmp` are in the same stage, which means that the lookups will be run in the order they appear: `l0`, `l1`, `l3`.
 
 **Remember: shapers use *features* to gather *lookups*.**
 
@@ -288,7 +288,7 @@ If the normal feature are selected, `rlig` and `ccmp` are on, but feature `test`
 
 Lookups may have flags which alter the way they operate.
 
-Experiment: Let's go back to our original ligature and try it against some new text:
+*Experiment*: Let's go back to our original ligature and try it against some new text:
 
 ```
 feature rlig {
@@ -302,27 +302,162 @@ The text I want you to try this against is `f̊f`. (Maybe you want to copy and p
 
 In a way it's pretty obvious that this *shouldn't* work, because the "read head" looks for the two glyphs "f" "f", and finds "f" "ringcomb" instead.
 
-* Flags - experiment: ff/f̊f
+But what if we want to ligate some text regardless of accents? When we come to dealing with our Arabic font, we're going to need to form ligatures between the glyphs which form the main stroke (the *rasm*) while ignoring all the dots and diacriticals around it. Here's one way to deal with the situation:
 
-* Phases: Sub and Pos phase
+```
+feature rlig {
+  lookup ff_ligature {
+    sub f f by f_f;
+    sub f @accents f by f_f;
+  } ff_ligature;
+} rlig;
+```
+
+But... no, that won't work, because then we substitute away the accent, and we want to keep that. Also it will get tedious if there are more than one possible accents which can occur together.
+
+OpenType lets us declare that some glyphs are *base* glyphs while others are *marks* - which glyphs go in which category is normally set in your font editor, although you [can also do it](http://adobe-type-tools.github.io/afdko/OpenTypeFeatureFileSpecification.html#9.b) in feature code. If we want to do the substitution while ignoring the mark glyphs, we can use the lookup flag `IgnoreMarks`. Try this now:
+
+```
+feature rlig {
+  lookup ff_ligature {
+    lookupflag IgnoreMarks;
+    sub f f by f_f;
+  } ff_ligature;
+} rlig;
+```
+
+Now we get the ligature *and* the accent.
+
+Other flags you can apply to a ligature (and you can apply more than one) are:
+
+* `RightToLeft` (Only used for cursive attachment lookups in Nastaliq fonts. You almost certainly don't need this.)
+* `IgnoreBaseGlyphs`
+* `IgnoreLigatures`
+* `IgnoreMarks`
+* `MarkAttachmentType @class` (This has been effectively superceded by the next flag; you almost certainly don't need this.)
+* `UseMarkFilteringSet @class`
+
+`UseMarkFilteringSet` ignores all marks *except* those in the specified class. This will come in useful when you are, for example, repositioning glyphs with marks above them but you don't really care too much about marks below them.
+
+> We won't experiment with these flags now, but will come back to them in our Arabic example.
+
+### Positioning Phase
+
+We've talked a lot about substitution so far, but that's not the only thing we can use OpenType rules for. You will have noticed that in our "paper tape" model of OpenType shaping, we had two rows on the tape - the top row was the glyph names. What's the bottom row?
+
+The shaper proceeds in two phases: first it applies substitution rules, which go in one part of the font, and then it applies *positioning* rules, which go in another.
+
+In the positioning phase, the shaper associates four numbers with each glyph position. These numbers - the X position, Y position, X advance and Y advance - are called a *value record*, and describe how to draw the string of glyphs. The shaper starts by taking the advance width from metrics of each glyph. As designer, we might think of this as the width of the glyph, but when we come to OpenType programming, it's *much* better to think of this as "where to draw the *next* glyph". Similarly the "position" should be thought of as "where this glyph gets shifted." (The X advance only applies in horizontal typesetting and the Y advance only applies in vertical typesetting.)
+
+In feature syntax, these value records are denoted as four numbers between angle brackets.
+
+![Value records](value-records.png)
+
+As well as writing rules to *substitute* glyphs in the glyph stream, we can also write *positioning* rules to adjust these value records. Let's write one now!
+
+*Experiment*: Remove the features you have added in OTLFiddle, and paste in this one:
+
+```
+feature kern {
+    lookup adjust_f {
+        pos f <0 0 200 0>;
+    } adjust_f;
+} kern;
+```
+
+ * Try it on text like `afbffc`. What did it do?
+ * Play about with each of the components of the value record. How do they affect the output?
+ * What about *negative* values?
+ * Try to turn the "f" into an "accent" - with no width of its own, positioned on top of the letter before it. What happens if you type two f's in a row? (Can you work out why?)
 
 ### Types of rule
 
-* Sub - types of sub. Why no many to many?
-* Pos - experiment. ???  (Value records)
-* Anchor 
-* Chain - experiment: swap two letters
-		
+We've seen a variety of substitution rules, as well as a positioning rule. Are there any other kinds of positioning rule? Are there any other rules? As it happens, the whole set of rule types we need to know about are:
+
+* Substitution
+    * One to one
+    * Many to one (ligature)
+    * One to many
+    * Reverse chaining (Only used for Nastaliq fonts)
+* Positioning
+    * Single positioning: `pos glyph <…>;`
+    * Pair positioning: `pos glyph1 <…> glyph2;`
+* Anchor
+* Chain
+
+Some *questions*:
+
+* Why isn't there a many to many substitution rule? (Hint: `IgnoreMarks`.)
+* Why do you think a pair positioning rule might be useful?
+
+*Anchor* rules (of which there are four kinds: cursive attachment, mark positioning, mark-to-mark and mark-to-ligature attachment) are for sticking a glyph onto another glyph. Again, unfortunately we don't have time to get into them today.
+
+*Chain* rules, however, are a lot of fun. They allow us to call a lookup at a given position in the glyph stream, if a certain set of conditions are met. Let's try one first, and then we'll explain it later.
+
+*Experiment*: Paste this into OTLFiddle:
+
+```
+lookup ff_ligature {
+    sub f f by f_f;
+} ff_ligature;
+
+feature rlig {
+    sub [A E I O U] f' lookup ff_ligature;
+} rlig;
+```
+
+Now try it on the string `Off off`. What happens? Why?
+
+A chain rule has three parts, two of which are optional: an optional *backtrack* (also known as *precontext*), the (mandatory) *input*, and the optional *lookahead* (also known as *postcontext*). The input sequence (marked with apostrophe `'` characters) also contains a list of lookups to run at each position if the backtrack, input and postcontext sequences match the glyph stream.
+
+Some notes on chain rules:
+
+* Chains which call substitution lookups must start `sub`. Chains which call position lookups must start `pos`.
+* You can chain into lookups containing chains (into lookups containing chains…)!
+* You can chain zero, one or (with recent versions of fontTools/makeotf) multiple lookups at each input glyph position:
+
+```
+sub [A E I O U]
+    f' lookup ff_ligature lookup uppercase # Two lookups
+    @lowercase'
+    [a e i o u]' lookup uppercase
+;
+```
+
+* There are “inline” forms of chain rules where you specify the rule to chain on the same line, not as a separate lookup:
+
+```
+  pos @medial @mark_above SHADDA’ <-30 100 0 0>;
+```
+
+* They will mess you up. Don’t use them.
+
+It's OK if you don't understand this yet. We're going to get some practice on how this all fits together in the next section.
+
 ## Introduction to Arabic font engineering
 
-* Explain init/medi/fina
+Now let's load the `Mirza-Dummy.ttf` font and paste in the rules from `Mirza-Dummy.fea` into OTLFiddle. The rules I've provided do two things: basic Arabic shaping using the `init`/`medi`/`fina` features, and mark positioning. These are things normally done for you by the font editor, so I don't expect you to code them yourself.
 
-* Challenges:
-  * Lam-Alif ligature (isolated and final)
-  * Lam kaf is too close. Insert a kashida between them (init and medi)
-  * Daf-Kaf  / Rah-kaf contextual kerning
+While we've said that features are collections of lookups, *sometimes* the shaper does something a bit more clever. Arabic glyphs have up to four possible forms depending on where they appear in the word: isolated, final, medial and initial. You can see all the different forms of the same letter (Arabic letter meem) in the following string: م ممم. The shaper applies the rules in the `fina` feature only to glyphs in final position, the `medi` feature to glyphs in medial position, and the `init` feature to glyphs in initial position. In those features, you would write ordinary substitution rules to turn e.g. `meem-ar` into `meem-ar.fina` - again, this is something that ordinarily your font editor would write for you, but it's worth knowing what's going on under the hood.
 
-* Accordion challenges:
-  * Repeated beh sequence
+Now I have some challenges for you!
 
-## Questions and close out
+* There is a required ligature in Arabic between the glyphs `lam-ar` and `alef-ar`. These should be replaced by `lam_alef.ar` in isolated form, and `am_alef-ar.fina` when in final form. (Alef is "right-joining", meaning it won't connect to anything on its left, so there's no medial form.) Of course, the ligature should work even if there are marks like `kasra-ar` (U+0650) or `fatha-ar` (U+064E) attached to either the lam or the alef.
+
+You will know you have completed this challenge when the input text `لِا سلاَ` is shaped as `[fatha-ar=9@53,-144|​lam_alef-ar.fina=9+559|​seen-ar.init=7+530|​space=6+200|​kasra-ar=0@335,136|​lam_alef-ar=0+447]`.
+
+*Note* that even though Arabic is read and rendered right-to-left, the OpenType glyph stream is in *logical order* i.e. in `لا` the `lam-ar` comes first.
+
+* Similarly the `kaf-ar` `lam-ar` ligature `kaf_lam-ar` needs to work in all four forms (`kaf_lam-ar`, `kaf_lam-ar.init`, `kaf_lam-ar.medi`, `kaf_lam-ar.fina`) - and of course with potential marks.
+
+* Shape the text `پے` (`peh-ar.init` `yehbarree-ar.fina`). Notice that the dots of the peh clash with the bar of the yeh barree. Write a rule which inserts a `kashida-ar` glyph after `peh-ar.init` and `peh-ar.medi` when the next glyph is `yehbarree-ar.fina`.
+
+*Hint*: You can't directly substitute `peh-ar.init yehbarree-ar.fina` with `peh-ar.init kashida-ar yehbarree-ar.fina` - that would be a many-to-many substitution which OpenType doesn't support. You're going to need to split this into two rules: one which checks that the context is right and chains to another rule, which makes a one-to-many substitution.
+
+* Shape the text `سبِے بِے سیِے یِے`. Notice that the sequence `[beh-ar.medi beh-ar.init yeh-farsi.init yeh-farsi.medi] kasra-ar yehbarree-ar.fina` makes the `kasra-ar` clash into the `yehbarree-ar.fina`. Add a chained positioning rule in the `kern` feature to reposition kasra in this context below the yeh barree.
+
+* Bonus challenge (to take home): Aya ("verse") numbers in the Quran are *enclosed* in a decorative border. When one- to three-digit sequences of Arabic numbers (`one-ar two-ar ...`) are followed by U+06DD END OF AYA SIGN, they should be replaced by small numbers (`one-ar.small two-ar.small ...`). You will need a chained substitution rule to achieve this. They should *also* have a chained *positioning* rule which reduces the advance width of each number to zero, and then displaces them so that they appear centered inside the `endofayah-ar`. Do this with a one-digit number first before working up to two and three digits!
+
+## Close-out
+
+Thank you for attending the workshop. This is the first time it has been run, so please let me know of any feedback you have. I hope it has been useful for you.
