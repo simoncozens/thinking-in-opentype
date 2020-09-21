@@ -26,7 +26,7 @@ Before the workshop you should:
 
 ## Introductions
 
-Welcome to the workshop! You can find what we’re going to be covering in the goals statement above. In the first half of this workshop we are going to be focusing more on understanding the fundamentals of how OpenType features work and how they are processed, rather than looking at specific recipes for doing specific tasks. The aim is that this will give you the tools that you need to solve your own problems in the future and that this knowledge will be transferable to more complex situations. In the second half of the workshop we will demonstrate this by applying these fundamentals to implementing some requirements of an Arabic font.
+Welcome to the workshop! You can find what we’re going to be covering in the goals statement above. In this workshop we are going to be focusing more on understanding the fundamentals of how OpenType features work and how they are processed, rather than looking at specific recipes for doing specific tasks. The aim is that this will give you the tools that you need to solve your own problems in the future and that this knowledge will be transferable to more complex situations.
 
 OpenType programming is a big area, and we cannot cover all of it in one hour! In particular, there are a few important areas which we cannot talk about today: 
 
@@ -160,52 +160,7 @@ feature rlig {
 } rlig;
 ```
 
-Try each one out in OTLFiddle against the input string "abc". What happened? Can you work out why? (Hint: How many lookups in the feature in each case? How many rules in each lookup?)
-
-### Ordering of rules, lookups and features
-
-*Experiment*: Try changing the order of the rules:
-
-```
-feature rlig {
-    sub f f by f_f;
-    sub f f i by f_f_i;
-    sub f l by f_l;
-} rlig;
-```
-
-Does it make a difference?
-
-*Experiment*: What does the following code do on the string `abc`?
-
-```
-feature rlig { sub a by b; } rlig;
-
-feature ccmp { sub b by c; } ccmp;
-
-feature rlig { sub c by d; } rlig;
-```
-
-Guess first before trying it out! Will it produce:
-
-* `bcd`
-* `bdd`
-* `ccd`
-* `ddd`
-* Something else?
-
-What about this?
-
-```
-feature ccmp { sub b by c; } ccmp;
-
-feature rlig { sub a by b; } rlig;
-
-feature rlig { sub c by d; } rlig;
-
-```
-
-**Remember: shapers use *features* to gather *lookups*.**
+Try each one out in OTLFiddle against the input string "cabbage". What happened? Can you work out why? (Hint: How many lookups in the feature in each case? How many rules in each lookup?)
 
 ### Lookup Flags
 
@@ -288,28 +243,6 @@ feature rlig {
 ```
 
 Now try it on the string `Off off`. What happens? Why?
-
-## Introduction to Arabic font engineering
-
-Now let's load the `Mirza-Dummy.ttf` font and paste in the rules from `Mirza-Dummy.fea` into OTLFiddle. The rules I've provided do two things: basic Arabic shaping using the `init`/`medi`/`fina` features, and mark positioning. These are things normally done for you by the font editor, so I don't expect you to code them yourself.
-
-Now I have some challenges for you!
-
-* There is a required ligature in Arabic between the glyphs `lam-ar` and `alef-ar`. These should be replaced by `lam_alef.ar` in isolated form, and `am_alef-ar.fina` when in final form. (Alef is "right-joining", meaning it won't connect to anything on its left, so there's no medial form.) Of course, the ligature should work even if there are marks like `kasra-ar` (U+0650) or `fatha-ar` (U+064E) attached to either the lam or the alef.
-
-You will know you have completed this challenge when the input text `لِا سلاَ` is shaped as `[fatha-ar=9@53,-144|​lam_alef-ar.fina=9+559|​seen-ar.init=7+530|​space=6+200|​kasra-ar=0@335,136|​lam_alef-ar=0+447]`.
-
-*Note* that even though Arabic is read and rendered right-to-left, the OpenType glyph stream is in *logical order* i.e. in `لا` the `lam-ar` comes first.
-
-* Similarly the `kaf-ar` `lam-ar` ligature `kaf_lam-ar` needs to work in all four forms (`kaf_lam-ar`, `kaf_lam-ar.init`, `kaf_lam-ar.medi`, `kaf_lam-ar.fina`) - and of course with potential marks.
-
-* Shape the text `پے` (`peh-ar.init` `yehbarree-ar.fina`). Notice that the dots of the peh clash with the bar of the yeh barree. Write a rule which inserts a `kashida-ar` glyph after `peh-ar.init` and `peh-ar.medi` when the next glyph is `yehbarree-ar.fina`.
-
-*Hint*: You can't directly substitute `peh-ar.init yehbarree-ar.fina` with `peh-ar.init kashida-ar yehbarree-ar.fina` - that would be a many-to-many substitution which OpenType doesn't support. You're going to need to split this into two rules: one which checks that the context is right and chains to another rule, which makes a one-to-many substitution.
-
-* Shape the text `سبِے بِے سیِے یِے`. Notice that the sequence `[beh-ar.medi beh-ar.init yeh-farsi.init yeh-farsi.medi] kasra-ar yehbarree-ar.fina` makes the `kasra-ar` clash into the `yehbarree-ar.fina`. Add a chained positioning rule in the `kern` feature to reposition kasra in this context below the yeh barree.
-
-* Bonus challenge (to take home): Aya ("verse") numbers in the Quran are *enclosed* in a decorative border. When one- to three-digit sequences of Arabic numbers (`one-ar two-ar ...`) are followed by U+06DD END OF AYA SIGN, they should be replaced by small numbers (`one-ar.small two-ar.small ...`). You will need a chained substitution rule to achieve this. They should *also* have a chained *positioning* rule which reduces the advance width of each number to zero, and then displaces them so that they appear centered inside the `endofayah-ar`. Do this with a one-digit number first before working up to two and three digits!
 
 ## Close-out
 

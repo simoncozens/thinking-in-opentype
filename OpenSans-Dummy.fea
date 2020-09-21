@@ -1,42 +1,4 @@
-languagesystem DFLT dflt;
-
-languagesystem latn dflt;
-languagesystem latn ROM;
-languagesystem latn MOL;
-languagesystem latn CAT;
-
-
-	markClass [gravecomb] <anchor -745 1096> @mark_top;
-	markClass [acutecomb] <anchor -559 1096> @mark_top;
-	markClass [circumflexcomb] <anchor -337 1096> @mark_top;
-	markClass [caroncomb brevecomb] <anchor -607 1096> @mark_top;
 	markClass [ringcomb] <anchor -592 1096> @mark_top;
-	markClass [tildecomb] <anchor -627 1096> @mark_top;
-	markClass [macroncomb] <anchor -338 1096> @mark_top;
-	markClass [dblgravecomb] <anchor -692 1096> @mark_top;
-	markClass [commaturnedabovecomb] <anchor -20 1096> @mark_top;
-	markClass [dotbelowcomb] <anchor -610 0> @mark_bottom;
-	markClass [commaaccentcomb] <anchor -207 0> @mark_bottom;
-	markClass [cedillacomb] <anchor -228 0> @mark_bottom;
-	markClass [ogonekcomb] <anchor -6 10> @mark_ogonek;
 feature mark {
-		pos base [A Aacute Abreve Adieresis Agrave Aogonek Aring Atilde]  <anchor 648 0> mark @mark_bottom <anchor 1166 10> mark @mark_ogonek <anchor 648 1798> mark @mark_top;
-		pos base [E Eacute Ebreve Ecaron Ecircumflex Edieresis Egrave Eogonek Etilde]  <anchor 570 0> mark @mark_bottom <anchor 1025 10> mark @mark_ogonek <anchor 570 1867> mark @mark_top;
-		pos base [I Iacute Ibreve Icircumflex Idieresis Idieresis Igrave Iogonek Itilde]  <anchor 286 0> mark @mark_bottom <anchor 514 10> mark @mark_ogonek <anchor 286 1462> mark @mark_top;
-		pos base [O Oacute Obreve Ocircumflex Odieresis Ograve Oslash Otilde]  <anchor 798 0> mark @mark_bottom <anchor 1435 10> mark @mark_ogonek <anchor 857 1907> mark @mark_top;
-		pos base [U Uacute Ubreve Ucircumflex Udieresis Ugrave Utilde]  <anchor 746 0> mark @mark_bottom <anchor 1342 10> mark @mark_ogonek <anchor 798 1907> mark @mark_top;
-		pos base [I.ss01]  <anchor 341 0> mark @mark_bottom <anchor 604 10> mark @mark_ogonek <anchor 341 1462> mark @mark_top;
-		pos base [IJ.ss01]  <anchor 956 0> mark @mark_bottom <anchor 604 10> mark @mark_ogonek <anchor 956 1462> mark @mark_top;
-		pos base [a]  <anchor 570 0> mark @mark_bottom <anchor 1025 10> mark @mark_ogonek <anchor 570 1096> mark @mark_top;
-		pos base [e eacute ebreve edieresis edotaccent egrave eogonek etilde]  <anchor 575 0> mark @mark_bottom <anchor 1011 40> mark @mark_ogonek <anchor 575 1501> mark @mark_top;
 		pos base [f]  <anchor 347 0> mark @mark_bottom <anchor 547 1496> mark @mark_top;
-		pos base [i idotless iacute ibreve icircumflex idieresis igrave imacron iogonek itilde]  <anchor 259 0> mark @mark_bottom <anchor 414 10> mark @mark_ogonek <anchor 259 1491> mark @mark_top;
-		pos base [j jdotless]  <anchor 259 0> mark @mark_bottom <anchor 259 1096> mark @mark_top;
-		pos base [o oacute obreve ocircumflex odieresis ograve omacron oslash otilde]  <anchor 619 0> mark @mark_bottom <anchor 1113 10> mark @mark_ogonek <anchor 619 1501> mark @mark_top;
-		pos base [u uacute ubreve ucircumflex udieresis ugrave uogonek uring utilde]  <anchor 629 0> mark @mark_bottom <anchor 1131 10> mark @mark_ogonek <anchor 629 1501> mark @mark_top;
-		pos base [g.ss02]  <anchor 615 1096> mark @mark_top;
-		pos base [gbreve.ss02]  <anchor 615 1509> mark @mark_top;
-		pos base [gcircumflex.ss02]  <anchor 615 1569> mark @mark_top;
-		pos base [gcommaaccent.ss02]  <anchor 615 1569> mark @mark_top;
-		pos base [gdotaccent.ss02]  <anchor 615 1503> mark @mark_top;
 } mark;
