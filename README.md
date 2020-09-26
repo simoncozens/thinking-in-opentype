@@ -13,7 +13,7 @@ for OpenType fonts.
 This repository contains the "dummy" (without discretionary features)
 Open Sans font used in the workshop, the [teacher's
 manual](./manual.md), [student's workbook](./workbook.pdf) and
-[Keynote slides](./OT Programming Workshop.key). Students attending
+[Keynote slides](./OT%20Programming%20Workshop.key). Students attending
 the workshop (or following along at home) will need a copy of the
 [OTLFiddle application](https://github.com/simoncozens/otlfiddle/releases),
 and preferably at least version 1.1.6 (which includes the necessary
